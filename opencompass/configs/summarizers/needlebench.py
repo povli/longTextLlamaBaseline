@@ -174,3 +174,8 @@ needlebench_v2_1000k_summarizer = create_summarizer(context_lengths_1000k, depth
 # 2M preset for custom long-context experiments.
 context_lengths_2m = [32000, 64000, 128000, 512000, 1000000, 2000000]
 needlebench_v2_2m_summarizer = create_summarizer(context_lengths_2m, depths_list_10, '2m', mean=True)
+
+# 1M subset (580k, 720k, 1000k) for targeted long-context runs.
+context_lengths_1m_subset = [580000, 720000, 1000000]
+needlebench_v2_1m_subset_summarizer = create_summarizer(
+    context_lengths_1m_subset, depths_list_10, '1m_subset', mean=True)

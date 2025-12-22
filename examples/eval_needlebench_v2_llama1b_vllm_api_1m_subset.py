@@ -1,6 +1,6 @@
 from mmengine.config import read_base
 from opencompass.models import OpenAISDK
-from opencompass.configs.summarizers.needlebench import create_summarizer
+from opencompass.configs.summarizers.needlebench import needlebench_v2_1m_subset_summarizer as summarizer  # noqa: E501
 import os
 
 api_meta_template = dict(
@@ -17,14 +17,9 @@ depths_list_10 = [i for i in range(0, 101, 10)]
 with read_base():
     from opencompass.configs.datasets.needlebench_v2.needlebench_v2_1000k.needlebench_v2_1000k import needlebench_datasets  # noqa: E501
 
-# Filter datasets to target lengths only
 datasets = [
-    d for d in needlebench_datasets
-    if d.get('length') in subset_lengths
+    d for d in needlebench_datasets if d.get('length') in subset_lengths
 ]
-
-# Build a summarizer matching the subset lengths
-summarizer = create_summarizer(subset_lengths, depths_list_10, '1m_subset', mean=True)
 
 openai_base = os.getenv('OPENAI_BASE_URL', 'http://127.0.0.1:8000/v1')
 del os
