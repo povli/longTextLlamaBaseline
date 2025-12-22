@@ -537,12 +537,15 @@ class OpenAI(BaseAPIModel):
                     input_content = bin_trim_wrapper(input_content)
                 processed_prompts.append(input_content)
                 msg = {'content': input_content}
-                if item['role'] == 'HUMAN':
+                if item.get('role') == 'HUMAN':
                     msg['role'] = 'user'
-                elif item['role'] == 'BOT':
+                elif item.get('role') == 'BOT':
                     msg['role'] = 'assistant'
-                elif item['role'] == 'SYSTEM':
+                elif item.get('role') == 'SYSTEM':
                     msg['role'] = 'system'
+                else:
+                    # Default to user to satisfy OpenAI/vLLM chat schema
+                    msg['role'] = 'user'
                 messages.append(msg)
             input_len = sum(
                 get_token_len_func(prompt) for prompt in processed_prompts)
