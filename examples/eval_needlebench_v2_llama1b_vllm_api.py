@@ -1,7 +1,6 @@
-import os
-
 from mmengine.config import read_base
 from opencompass.models import OpenAISDK
+import os
 
 api_meta_template = dict(
     round=[
@@ -15,6 +14,7 @@ with read_base():
     from opencompass.configs.summarizers.needlebench_v2_2m_summarizer import needlebench_v2_2m_summarizer as summarizer  # noqa: E501
 
 openai_base = os.getenv('OPENAI_BASE_URL', 'http://127.0.0.1:8000/v1')
+del os
 
 models = [
     dict(
