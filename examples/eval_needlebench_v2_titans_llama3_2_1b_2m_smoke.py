@@ -4,9 +4,26 @@ import os
 
 # Override via env var if needed, default is non-LoRA Titans-style delta_product.
 TPTT_SUBFOLDER = os.getenv('TPTT_SUBFOLDER', 'delta_product_m0.5_constant')
+BASE_MODEL_NAME = os.getenv('BASE_MODEL_NAME')
+BASE_MODEL_SUBFOLDER = os.getenv('BASE_MODEL_SUBFOLDER')
+BASE_TOKENIZER_PATH = os.getenv('BASE_TOKENIZER_PATH')
 SMOKE_CONTEXT_LEN = int(os.getenv('SMOKE_CONTEXT_LEN', '2000000'))
 SMOKE_DEPTH = int(os.getenv('SMOKE_DEPTH', '50'))
 del os
+
+base_model_overrides = {}
+if BASE_MODEL_NAME:
+    base_model_overrides['base_model_name'] = BASE_MODEL_NAME
+if BASE_MODEL_SUBFOLDER:
+    base_model_overrides['base_model_subfolder'] = BASE_MODEL_SUBFOLDER
+
+tokenizer_path = BASE_TOKENIZER_PATH or BASE_MODEL_NAME
+tokenizer_kwargs = dict(
+    trust_remote_code=True,
+    padding_side='left',
+)
+if tokenizer_path is None:
+    tokenizer_kwargs['subfolder'] = TPTT_SUBFOLDER
 
 
 with read_base():
@@ -42,11 +59,11 @@ models = [
             torch_dtype='torch.bfloat16',
             max_self_attn_length=4096,
             attn_implementation='flash_attention_2',
+            **base_model_overrides,
         ),
+        tokenizer_path=tokenizer_path,
         tokenizer_kwargs=dict(
-            trust_remote_code=True,
-            subfolder=TPTT_SUBFOLDER,
-            padding_side='left',
+            **tokenizer_kwargs,
         ),
         max_seq_len=2048000,
         max_out_len=256,
