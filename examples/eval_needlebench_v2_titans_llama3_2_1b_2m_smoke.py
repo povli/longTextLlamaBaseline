@@ -13,8 +13,9 @@ with read_base():
     from opencompass.configs.datasets.needlebench_v2.needlebench_v2_2m.needlebench_v2_single_2m import (  # noqa: E501
         needlebench_en_datasets,
     )
-    # Leave summarizer empty for smoke test to avoid lazy config serialization.
-    summarizer = {}
+
+# Leave summarizer empty for smoke test to avoid lazy config serialization.
+summarizer = {}
 
 
 _dataset = None
