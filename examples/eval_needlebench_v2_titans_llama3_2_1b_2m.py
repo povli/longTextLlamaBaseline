@@ -1,9 +1,53 @@
 from mmengine.config import read_base
 from opencompass.models import HuggingFaceBaseModel
 import os
+import torch
 
 # Override via env var if needed, default is non-LoRA Titans-style delta_product.
 TPTT_SUBFOLDER = os.getenv('TPTT_SUBFOLDER', 'delta_product_m0.5_constant')
+
+def _wrap_generate_for_mem():
+    orig_generate = HuggingFaceBaseModel.generate
+
+    def wrapped(self, inputs, max_out_len, **kwargs):
+        devices = []
+        base_stats = {}
+        if torch.cuda.is_available():
+            devices = list(range(torch.cuda.device_count()))
+            for i in devices:
+                torch.cuda.synchronize(i)
+                base_stats[i] = (
+                    torch.cuda.memory_allocated(i),
+                    torch.cuda.memory_reserved(i),
+                )
+                torch.cuda.reset_peak_memory_stats(i)
+
+        out = orig_generate(self, inputs, max_out_len, **kwargs)
+
+        if devices:
+            for i in devices:
+                torch.cuda.synchronize(i)
+            parts = []
+            for i in devices:
+                peak_alloc = torch.cuda.max_memory_allocated(i)
+                peak_reserved = torch.cuda.max_memory_reserved(i)
+                inc_alloc = max(0, peak_alloc - base_stats[i][0])
+                inc_reserved = max(0, peak_reserved - base_stats[i][1])
+                parts.append(
+                    f'cuda:{i} inc_alloc={inc_alloc/1024**2:.1f}MB '
+                    f'inc_reserved={inc_reserved/1024**2:.1f}MB '
+                    f'peak_alloc={peak_alloc/1024**2:.1f}MB'
+                )
+            if hasattr(self, 'logger'):
+                self.logger.info('[mem] ' + ' | '.join(parts))
+            else:
+                print('[mem] ' + ' | '.join(parts))
+        return out
+
+    HuggingFaceBaseModel.generate = wrapped
+
+
+_wrap_generate_for_mem()
 
 with read_base():
     from opencompass.configs.datasets.needlebench_v2.needlebench_v2_2m.needlebench_v2_2m import needlebench_datasets as datasets  # noqa: E501
@@ -30,7 +74,7 @@ models = [
         max_seq_len=2048000,
         max_out_len=256,
         batch_size=1,
-        run_cfg=dict(num_gpus=1),
+        run_cfg=dict(num_gpus=2),
     )
 ]
 
