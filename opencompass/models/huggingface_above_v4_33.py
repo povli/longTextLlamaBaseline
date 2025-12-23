@@ -233,6 +233,13 @@ class HuggingFacewithChatTemplate(BaseModel):
         except ValueError:
             self.model = AutoModel.from_pretrained(path, **model_kwargs)
 
+        try:
+            from opencompass.utils.tptt_patch import patch_tptt_full_length_mix
+            if patch_tptt_full_length_mix(self.model):
+                self.logger.info('Applied TPTT full-length MAG patch.')
+        except Exception as exc:
+            self.logger.debug(f'Failed to patch TPTT MAG mixer: {exc}')
+
         if peft_path is not None:
             from peft import PeftModel
             peft_kwargs['is_trainable'] = False
