@@ -4,6 +4,7 @@ import os
 
 # Override via env var if needed, default is non-LoRA Titans-style delta_product.
 TPTT_SUBFOLDER = os.getenv('TPTT_SUBFOLDER', 'delta_product_m0.5_constant')
+del os
 
 with read_base():
     from opencompass.configs.datasets.needlebench_v2.needlebench_v2_2m.needlebench_v2_2m import needlebench_datasets as datasets  # noqa: E501
