@@ -125,7 +125,16 @@ def patch_tptt_full_length_mix(model: Any) -> bool:
             )
 
             o_lin, o_base = self._prepare_attn_mixin(o_lin, o_base, dtype, eps=1e-5)
-            mag_weight = self.memory_gate(hidden_states)
+            memory_gate = getattr(self, "memory_gate", None)
+            if memory_gate is not None:
+                mag_weight = memory_gate(hidden_states)
+            else:
+                mag_weight = torch.full(
+                    (hidden_states.shape[0], hidden_states.shape[1], 1),
+                    0.5,
+                    device=hidden_states.device,
+                    dtype=hidden_states.dtype,
+                )
             out = _mix_full_length(self, mag_weight, o_lin, o_base)
 
             if expected_attn_mode == 3:
