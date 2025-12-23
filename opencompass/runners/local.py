@@ -217,6 +217,11 @@ class LocalRunner(BaseRunner):
         param_file = f'{pwd}/tmp/{uuid_str}_params.py'
 
         try:
+            if gpu_ids is None:
+                gpu_ids = []
+            elif isinstance(gpu_ids, np.ndarray):
+                gpu_ids = gpu_ids.tolist()
+
             task.cfg.dump(param_file)
             tmpl = get_command_template(gpu_ids)
             get_cmd = partial(task.get_command,
@@ -234,7 +239,7 @@ class LocalRunner(BaseRunner):
             smi_proc = None
             smi_stdout = None
             if (os.getenv('OPENCOMPASS_AUTO_SMI', '').lower() in ('1', 'true', 'yes')
-                    and gpu_ids):
+                    and len(gpu_ids) > 0):
                 if shutil.which('nvidia-smi'):
                     interval = os.getenv('OPENCOMPASS_SMI_INTERVAL', '1')
                     smi_dir = os.getenv('OPENCOMPASS_SMI_LOG_DIR', '')
