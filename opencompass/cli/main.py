@@ -255,6 +255,10 @@ def main():
                          '`--hf-num-gpus` to describe number of gpus used for '
                          'the HuggingFace model instead.')
 
+    if os.getenv('OPENCOMPASS_MEM_PATCH', '').lower() in ('1', 'true', 'yes'):
+        from opencompass.utils.mem_patch import patch_hf_base_generate_for_mem
+        patch_hf_base_generate_for_mem()
+
     if args.dry_run:
         args.debug = True
     # initialize logger

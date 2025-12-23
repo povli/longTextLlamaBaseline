@@ -1,6 +1,5 @@
 from mmengine.config import read_base
 from opencompass.models import HuggingFaceBaseModel
-from opencompass.utils.mem_patch import patch_hf_base_generate_for_mem
 import os
 
 # Override via env var if needed, default is non-LoRA Titans-style delta_product.
@@ -8,8 +7,6 @@ TPTT_SUBFOLDER = os.getenv('TPTT_SUBFOLDER', 'delta_product_m0.5_constant')
 SMOKE_CONTEXT_LEN = int(os.getenv('SMOKE_CONTEXT_LEN', '2000000'))
 SMOKE_DEPTH = int(os.getenv('SMOKE_DEPTH', '50'))
 
-
-patch_hf_base_generate_for_mem()
 
 with read_base():
     from opencompass.configs.datasets.needlebench_v2.needlebench_v2_2m.needlebench_v2_single_2m import (  # noqa: E501

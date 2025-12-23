@@ -1,12 +1,9 @@
 from mmengine.config import read_base
 from opencompass.models import HuggingFaceBaseModel
-from opencompass.utils.mem_patch import patch_hf_base_generate_for_mem
 import os
 
 # Override via env var if needed, default is non-LoRA Titans-style delta_product.
 TPTT_SUBFOLDER = os.getenv('TPTT_SUBFOLDER', 'delta_product_m0.5_constant')
-
-patch_hf_base_generate_for_mem()
 
 with read_base():
     from opencompass.configs.datasets.needlebench_v2.needlebench_v2_2m.needlebench_v2_2m import needlebench_datasets as datasets  # noqa: E501
