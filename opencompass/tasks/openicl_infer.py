@@ -77,6 +77,9 @@ class OpenICLInferTask(BaseTask):
                 self.model = cur_model
             else:
                 self.model = build_model_from_cfg(model_cfg)
+                if os.getenv('OPENCOMPASS_MEM_PATCH', '').lower() in ('1', 'true', 'yes'):
+                    from opencompass.utils.mem_patch import patch_model_generate_for_mem
+                    patch_model_generate_for_mem(self.model)
 
             for dataset_cfg in dataset_cfgs:
                 self.model_cfg = model_cfg
