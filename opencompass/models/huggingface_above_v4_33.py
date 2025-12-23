@@ -471,6 +471,11 @@ class HuggingFacewithChatTemplate(BaseModel):
                             (field_values[:, :half_max_prompt_len], field_values[:, -half_max_prompt_len:]), dim=1
                         )
 
+        if 'attention_mask' in tokens and tokens['attention_mask'].dim() == 2:
+            if tokens['attention_mask'].sum().item() == tokens['attention_mask'].numel():
+                if tokens['attention_mask'].shape[1] > 16384:
+                    tokens.pop('attention_mask')
+
         generation_kwargs = self.generation_kwargs.copy()
         generation_kwargs.update(kwargs)
         stopping_criteria = list(set(stopping_criteria + self.stop_words))
@@ -574,6 +579,11 @@ class HuggingFaceBaseModel(HuggingFacewithChatTemplate):
             tokens = self.tokenizer.batch_encode_plus(messages, **tokenize_kwargs)
 
         tokens = {k: v.to(self.model.device) for k, v in tokens.items()}
+
+        if 'attention_mask' in tokens and tokens['attention_mask'].dim() == 2:
+            if tokens['attention_mask'].sum().item() == tokens['attention_mask'].numel():
+                if tokens['attention_mask'].shape[1] > 16384:
+                    tokens.pop('attention_mask')
 
         generation_kwargs = self.generation_kwargs.copy()
         generation_kwargs.update(kwargs)

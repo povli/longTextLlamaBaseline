@@ -18,13 +18,22 @@ def patch_tptt_full_length_mix(model: Any) -> bool:
     liz_attention = module.LiZAttention
     if getattr(liz_attention, "_opencompass_full_length_mix", False):
         return True
+    if not hasattr(liz_attention, "_opencompass_apply_mag_orig"):
+        liz_attention._opencompass_apply_mag_orig = liz_attention._apply_mag
 
     def _apply_mag(
         self,
         mag_weight: torch.Tensor,
         linear_attention: torch.Tensor,
-        softmax_attention: torch.Tensor,
+        softmax_attention: torch.Tensor = None,
+        *args,
+        **kwargs,
     ) -> torch.Tensor:
+        if softmax_attention is None:
+            return liz_attention._opencompass_apply_mag_orig(
+                self, mag_weight, linear_attention, *args, **kwargs
+            )
+
         if self.disable_linear_attn:
             return softmax_attention
 
