@@ -1,7 +1,7 @@
 from mmengine.config import read_base
 from opencompass.models import HuggingFaceBaseModel
+from opencompass.utils.mem_patch import patch_hf_base_generate_for_mem
 import os
-import torch
 
 # Override via env var if needed, default is non-LoRA Titans-style delta_product.
 TPTT_SUBFOLDER = os.getenv('TPTT_SUBFOLDER', 'delta_product_m0.5_constant')
@@ -9,48 +9,7 @@ SMOKE_CONTEXT_LEN = int(os.getenv('SMOKE_CONTEXT_LEN', '2000000'))
 SMOKE_DEPTH = int(os.getenv('SMOKE_DEPTH', '50'))
 
 
-def _wrap_generate_for_mem():
-    orig_generate = HuggingFaceBaseModel.generate
-
-    def wrapped(self, inputs, max_out_len, **kwargs):
-        devices = []
-        base_stats = {}
-        if torch.cuda.is_available():
-            devices = list(range(torch.cuda.device_count()))
-            for i in devices:
-                torch.cuda.synchronize(i)
-                base_stats[i] = (
-                    torch.cuda.memory_allocated(i),
-                    torch.cuda.memory_reserved(i),
-                )
-                torch.cuda.reset_peak_memory_stats(i)
-
-        out = orig_generate(self, inputs, max_out_len, **kwargs)
-
-        if devices:
-            for i in devices:
-                torch.cuda.synchronize(i)
-            parts = []
-            for i in devices:
-                peak_alloc = torch.cuda.max_memory_allocated(i)
-                peak_reserved = torch.cuda.max_memory_reserved(i)
-                inc_alloc = max(0, peak_alloc - base_stats[i][0])
-                inc_reserved = max(0, peak_reserved - base_stats[i][1])
-                parts.append(
-                    f'cuda:{i} inc_alloc={inc_alloc/1024**2:.1f}MB '
-                    f'inc_reserved={inc_reserved/1024**2:.1f}MB '
-                    f'peak_alloc={peak_alloc/1024**2:.1f}MB'
-                )
-            if hasattr(self, 'logger'):
-                self.logger.info('[mem] ' + ' | '.join(parts))
-            else:
-                print('[mem] ' + ' | '.join(parts))
-        return out
-
-    HuggingFaceBaseModel.generate = wrapped
-
-
-_wrap_generate_for_mem()
+patch_hf_base_generate_for_mem()
 
 with read_base():
     from opencompass.configs.datasets.needlebench_v2.needlebench_v2_2m.needlebench_v2_single_2m import (  # noqa: E501
@@ -59,15 +18,13 @@ with read_base():
     from opencompass.configs.summarizers.needlebench_v2_2m_summarizer import needlebench_v2_2m_summarizer as summarizer  # noqa: E501
 
 
-def _select_smoke_dataset(datasets, length, depth):
-    for item in datasets:
-        if item.get('length') == length and item.get('depth') == depth:
-            return item
-    return datasets[0]
-
-
-_dataset = _select_smoke_dataset(
-    needlebench_en_datasets, SMOKE_CONTEXT_LEN, SMOKE_DEPTH)
+_dataset = None
+for item in needlebench_en_datasets:
+    if item.get('length') == SMOKE_CONTEXT_LEN and item.get('depth') == SMOKE_DEPTH:
+        _dataset = item
+        break
+if _dataset is None:
+    _dataset = needlebench_en_datasets[0]
 _dataset = {**_dataset}
 _dataset['abbr'] = f'{_dataset["abbr"]}_smoke'
 _dataset['num_repeats_per_file'] = 1
