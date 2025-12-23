@@ -1,6 +1,7 @@
 import os
 import os.path as osp
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -227,9 +228,43 @@ class LocalRunner(BaseRunner):
             logger.debug(f'Running command: {cmd}')
 
             # Run command
-            out_path = task.get_log_path(file_extension='out')
-            mmengine.mkdir_or_exist(osp.split(out_path)[0])
-            stdout = open(out_path, 'w', encoding='utf-8')
+        out_path = task.get_log_path(file_extension='out')
+        mmengine.mkdir_or_exist(osp.split(out_path)[0])
+        stdout = open(out_path, 'w', encoding='utf-8')
+        smi_proc = None
+        smi_stdout = None
+        if (os.getenv('OPENCOMPASS_AUTO_SMI', '').lower() in ('1', 'true', 'yes')
+                and gpu_ids):
+            if shutil.which('nvidia-smi'):
+                interval = os.getenv('OPENCOMPASS_SMI_INTERVAL', '1')
+                smi_dir = os.getenv('OPENCOMPASS_SMI_LOG_DIR', '')
+                if smi_dir:
+                    mmengine.mkdir_or_exist(smi_dir)
+                    smi_log = osp.join(
+                        smi_dir,
+                        f'{task_name}_{index}_{int(time.time())}.smi.csv')
+                else:
+                    base, _ = osp.splitext(out_path)
+                    smi_log = f'{base}.smi.csv'
+                smi_stdout = open(smi_log, 'w', encoding='utf-8')
+                cmd_smi = [
+                    'nvidia-smi',
+                    '-i',
+                    ','.join(map(str, gpu_ids)),
+                    '--query-gpu=timestamp,index,name,memory.used,memory.total,'
+                    'utilization.gpu,utilization.memory',
+                    '--format=csv',
+                    '-l',
+                    str(interval),
+                ]
+                smi_proc = subprocess.Popen(
+                    cmd_smi,
+                    stdout=smi_stdout,
+                    stderr=subprocess.STDOUT,
+                    text=True)
+            else:
+                logger.warning('OPENCOMPASS_AUTO_SMI=1 but nvidia-smi not found; '
+                               'skip GPU sampling.')
 
             result = subprocess.run(cmd,
                                     shell=True,
@@ -240,6 +275,14 @@ class LocalRunner(BaseRunner):
             if result.returncode != 0:
                 logger.error(f'task {task_name} fail, see\n{out_path}')
         finally:
+            if smi_proc is not None:
+                smi_proc.terminate()
+                try:
+                    smi_proc.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    smi_proc.kill()
+            if smi_stdout is not None:
+                smi_stdout.close()
             # Clean up
             if not self.keep_tmp_file:
                 os.remove(param_file)
