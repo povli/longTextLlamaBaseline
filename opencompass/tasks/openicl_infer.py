@@ -16,6 +16,10 @@ from opencompass.utils import (build_dataset_from_cfg, build_model_from_cfg,
                                get_infer_output_path, get_logger,
                                model_abbr_from_cfg, task_abbr_from_cfg)
 
+if os.getenv('OPENCOMPASS_MEM_PATCH', '').lower() in ('1', 'true', 'yes'):
+    from opencompass.utils.mem_patch import patch_hf_base_generate_for_mem
+    patch_hf_base_generate_for_mem()
+
 
 @TASKS.register_module()
 class OpenICLInferTask(BaseTask):
