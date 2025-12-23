@@ -30,7 +30,7 @@ models = [
         max_seq_len=2048000,
         max_out_len=256,
         batch_size=1,
-        run_cfg=dict(num_gpus=2),
+        run_cfg=dict(num_gpus=1),
     )
 ]
 
