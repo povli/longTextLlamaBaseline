@@ -53,33 +53,25 @@ def _wrap_generate_for_mem():
 _wrap_generate_for_mem()
 
 with read_base():
-    from opencompass.datasets.needlebench_v2.origin import NeedleBenchOriginDataset
     from opencompass.configs.datasets.needlebench_v2.needlebench_v2_2m.needlebench_v2_single_2m import (  # noqa: E501
-        needlebench_reader_cfg,
-        needlebench_infer_cfg,
-        needlebench_eval_cfg,
+        needlebench_en_datasets,
     )
     from opencompass.configs.summarizers.needlebench_v2_2m_summarizer import needlebench_v2_2m_summarizer as summarizer  # noqa: E501
 
 
-datasets = [
-    dict(
-        abbr=f'Length{SMOKE_CONTEXT_LEN}Depth{SMOKE_DEPTH}_origin_en_2m_smoke',
-        type=NeedleBenchOriginDataset,
-        path='opencompass/needlebench',
-        length=SMOKE_CONTEXT_LEN,
-        depth=SMOKE_DEPTH,
-        tokenizer_model='gpt-4',
-        file_list=['PaulGrahamEssays.jsonl'],
-        num_repeats_per_file=1,
-        length_buffer=3000,
-        language='English',
-        needle_file_name='needles.jsonl',
-        reader_cfg=needlebench_reader_cfg,
-        infer_cfg=needlebench_infer_cfg,
-        eval_cfg=needlebench_eval_cfg,
-    )
-]
+def _select_smoke_dataset(datasets, length, depth):
+    for item in datasets:
+        if item.get('length') == length and item.get('depth') == depth:
+            return item
+    return datasets[0]
+
+
+_dataset = _select_smoke_dataset(
+    needlebench_en_datasets, SMOKE_CONTEXT_LEN, SMOKE_DEPTH)
+_dataset = {**_dataset}
+_dataset['abbr'] = f'{_dataset["abbr"]}_smoke'
+_dataset['num_repeats_per_file'] = 1
+datasets = [_dataset]
 
 models = [
     dict(
