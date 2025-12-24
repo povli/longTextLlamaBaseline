@@ -11,7 +11,7 @@ os.environ.setdefault('OPENCOMPASS_MEM_PATCH', '1')
 
 # Override via env var if needed, default is non-LoRA Titans-style delta_product.
 TPTT_SUBFOLDER = os.getenv('TPTT_SUBFOLDER', 'delta_product_m0.5_constant')
-EVAL_REUSE_STAMP = os.getenv('EVAL_REUSE_STAMP', '')
+_EVAL_REUSE_STAMP = os.getenv('EVAL_REUSE_STAMP', '')
 del os
 
 work_dir = './outputs/needlebench_2m_titans_llama3_2_1b'
@@ -52,12 +52,12 @@ models = [
 ]
 
 # Evaluate only datasets that already have prediction files under the reuse stamp.
-if EVAL_REUSE_STAMP:
-    model_abbr = models[0]['abbr']
-    pred_dir = Path(work_dir) / EVAL_REUSE_STAMP / 'predictions' / model_abbr
-    if pred_dir.exists():
-        pred_abbr = {
+if _EVAL_REUSE_STAMP:
+    _model_abbr = models[0]['abbr']
+    _pred_dir = Path(work_dir) / _EVAL_REUSE_STAMP / 'predictions' / _model_abbr
+    if _pred_dir.exists():
+        _pred_abbr = {
             re.sub(r'_\d+$', '', p.stem)
-            for p in pred_dir.glob('*.json')
+            for p in _pred_dir.glob('*.json')
         }
-        datasets = [d for d in datasets if d.get('abbr') in pred_abbr]
+        datasets = [d for d in datasets if d.get('abbr') in _pred_abbr]
