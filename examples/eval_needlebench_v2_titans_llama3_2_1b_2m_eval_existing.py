@@ -1,6 +1,5 @@
 from mmengine.config import read_base
 from opencompass.models import HuggingFaceBaseModel
-from pathlib import Path
 import os
 import re
 
@@ -54,10 +53,13 @@ models = [
 # Evaluate only datasets that already have prediction files under the reuse stamp.
 if _EVAL_REUSE_STAMP:
     _model_abbr = models[0]['abbr']
-    _pred_dir = Path(work_dir) / _EVAL_REUSE_STAMP / 'predictions' / _model_abbr
-    if _pred_dir.exists():
-        _pred_abbr = {
-            re.sub(r'_\d+$', '', p.stem)
-            for p in _pred_dir.glob('*.json')
-        }
-        datasets = [d for d in datasets if d.get('abbr') in _pred_abbr]
+    _pred_abbr = {
+        re.sub(r'_\d+$', '', p.stem)
+        for p in (  # Build path inline to avoid Path objects in the dumped config.
+            __import__('pathlib')
+            .Path(work_dir)
+            .joinpath(_EVAL_REUSE_STAMP, 'predictions', _model_abbr)
+            .glob('*.json')
+        )
+    }
+    datasets = [d for d in datasets if d.get('abbr') in _pred_abbr]
