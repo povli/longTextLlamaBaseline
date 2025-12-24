@@ -39,8 +39,8 @@ models = [
         abbr=f'titans-llama-3.2-1b-{TPTT_SUBFOLDER}-smoke',
         path='ffurfaro/Titans-Llama-3.2-1B',
         model_kwargs=dict(
-            device_map='balanced',
-            max_memory={'cuda:0': '70GiB', 'cuda:1': '70GiB'},
+            device_map='auto',
+            max_memory={'cuda:0': '70GiB'},
             trust_remote_code=True,
             subfolder=TPTT_SUBFOLDER,
             torch_dtype='torch.bfloat16',
@@ -54,7 +54,7 @@ models = [
         max_seq_len=2048000,
         max_out_len=128,
         batch_size=1,
-        run_cfg=dict(num_gpus=2),
+        run_cfg=dict(num_gpus=1),
     )
 ]
 
