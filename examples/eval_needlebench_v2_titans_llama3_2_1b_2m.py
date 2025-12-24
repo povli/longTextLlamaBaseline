@@ -32,6 +32,9 @@ models = [
             subfolder=TPTT_SUBFOLDER,
             padding_side='left',
         ),
+        generation_kwargs=dict(
+            use_cache=False,
+        ),
         max_seq_len=2048000,
         max_out_len=64,
         batch_size=1,
