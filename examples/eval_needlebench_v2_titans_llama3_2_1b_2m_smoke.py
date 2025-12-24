@@ -48,7 +48,7 @@ models = [
             padding_side='left',
         ),
         max_seq_len=2048000,
-        max_out_len=256,
+        max_out_len=128,
         batch_size=1,
         run_cfg=dict(num_gpus=2),
     )
