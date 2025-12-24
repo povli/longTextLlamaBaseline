@@ -3,6 +3,9 @@ from opencompass.models import HuggingFaceBaseModel
 import os
 
 # Override via env var if needed, default is non-LoRA Titans-style delta_product.
+os.environ.setdefault('OPENCOMPASS_AUTO_SMI', '1')
+os.environ.setdefault('OPENCOMPASS_SMI_INTERVAL', '1')
+os.environ.setdefault('OPENCOMPASS_MEM_PATCH', '1')
 TPTT_SUBFOLDER = os.getenv('TPTT_SUBFOLDER', 'delta_product_m0.5_constant')
 SMOKE_CONTEXT_LEN = int(os.getenv('SMOKE_CONTEXT_LEN', '2000000'))
 SMOKE_DEPTH = int(os.getenv('SMOKE_DEPTH', '60'))
