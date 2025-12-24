@@ -6,6 +6,7 @@ import os
 os.environ.setdefault('OPENCOMPASS_AUTO_SMI', '1')
 os.environ.setdefault('OPENCOMPASS_SMI_INTERVAL', '1')
 os.environ.setdefault('OPENCOMPASS_MEM_PATCH', '1')
+os.environ.setdefault('PYTORCH_ALLOC_CONF', 'expandable_segments:True')
 TPTT_SUBFOLDER = os.getenv('TPTT_SUBFOLDER', 'delta_product_m0.5_constant')
 del os
 
@@ -20,7 +21,7 @@ models = [
         path='ffurfaro/Titans-Llama-3.2-1B',
         model_kwargs=dict(
             device_map='auto',
-            max_memory={0: '80GiB', 1: '80GiB'},
+            max_memory={0: '60GiB', 1: '80GiB'},
             trust_remote_code=True,
             subfolder=TPTT_SUBFOLDER,
             torch_dtype='torch.bfloat16',
@@ -32,7 +33,7 @@ models = [
             padding_side='left',
         ),
         max_seq_len=2048000,
-        max_out_len=128,
+        max_out_len=64,
         batch_size=1,
         run_cfg=dict(num_gpus=2),
     )
