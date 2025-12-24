@@ -5,7 +5,7 @@ import os
 # Override via env var if needed, default is non-LoRA Titans-style delta_product.
 TPTT_SUBFOLDER = os.getenv('TPTT_SUBFOLDER', 'delta_product_m0.5_constant')
 SMOKE_CONTEXT_LEN = int(os.getenv('SMOKE_CONTEXT_LEN', '2000000'))
-SMOKE_DEPTH = int(os.getenv('SMOKE_DEPTH', '50'))
+SMOKE_DEPTH = int(os.getenv('SMOKE_DEPTH', '60'))
 del os
 
 
@@ -50,7 +50,7 @@ models = [
         max_seq_len=2048000,
         max_out_len=256,
         batch_size=1,
-        run_cfg=dict(num_gpus=1),
+        run_cfg=dict(num_gpus=2),
     )
 ]
 
